@@ -1,0 +1,43 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { faqItems } from "../data/faq";
+---
+
+<Layout title="FAQ" description="Frequently asked questions about Kustom Fits custom printing, orders, shipping, and returns.">
+  <Header slot="header" />
+
+  <section class="px-4 py-12 sm:px-6">
+    <div class="mx-auto max-w-3xl">
+      <h1 class="font-display text-4xl tracking-wide text-white">FAQ</h1>
+      <p class="mt-3 text-brand-gray">
+        Everything you need to know about custom printing, ordering, and delivery.
+      </p>
+
+      <div class="mt-10 space-y-4">
+        {
+          faqItems.map((item) => (
+            <details class="group rounded-2xl border border-white/10 bg-brand-card">
+              <summary class="cursor-pointer list-none px-5 py-4 font-display tracking-wide text-white marker:content-none">
+                <span class="flex items-center justify-between gap-4">
+                  {item.question}
+                  <span class="text-brand-cyan transition group-open:rotate-45">+</span>
+                </span>
+              </summary>
+              <p class="border-t border-white/10 px-5 py-4 text-sm leading-relaxed text-brand-gray">
+                {item.answer}
+              </p>
+            </details>
+          ))
+        }
+      </div>
+
+      <p class="mt-10 text-sm text-brand-muted">
+        Still have a question? <a href="/contact" class="text-brand-cyan hover:text-white">Get in touch</a> — we're happy to help.
+      </p>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Layout>

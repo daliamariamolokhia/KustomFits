@@ -1,0 +1,30 @@
+---
+import { productPlaceholder, type Product } from "../data/products";
+
+interface Props {
+  product: Product;
+  large?: boolean;
+  class?: string;
+}
+
+const { product, large = false, class: className = "" } = Astro.props;
+const placeholder = productPlaceholder(product.slug);
+const heightClass = large ? "min-h-[360px] sm:min-h-[420px]" : "h-44 sm:h-48";
+---
+
+<div
+  class:list={[
+    "product-image relative overflow-hidden rounded-xl border border-white/10 bg-brand-dark",
+    heightClass,
+    className,
+  ]}
+  data-product-image={product.slug}
+>
+  <img
+    src={product.image}
+    alt={product.imageAlt}
+    class="h-full w-full object-cover"
+    loading="lazy"
+    onerror={`this.onerror=null;this.src='${placeholder}';`}
+  />
+</div>

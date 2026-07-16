@@ -1,0 +1,66 @@
+---
+import type { Product } from "../data/products";
+import { formatPrice } from "../data/products";
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+
+const groupedVariants = product.variants.reduce<Record<string, typeof product.variants>>(
+  (acc, variant) => {
+    const group = variant.group ?? "Choose option";
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(variant);
+    return acc;
+  },
+  {},
+);
+
+const hasMultipleGroups = Object.keys(groupedVariants).length > 1;
+---
+
+<form data-add-to-cart class="space-y-4">
+  <input type="hidden" name="productId" value={product.id} />
+  <input type="hidden" name="name" value={product.name} />
+  <input type="hidden" name="slug" value={product.slug} />
+  <input type="hidden" name="price" value={product.price} />
+
+  <div>
+    <label class="block text-sm text-brand-gray" for="variant">
+      {hasMultipleGroups ? "Size & colour" : "Option"}
+    </label>
+    <select
+      id="variant"
+      name="variant"
+      required
+      class="mt-1 w-full rounded-xl border border-white/15 bg-brand-black px-4 py-3 text-white outline-none focus:border-brand-cyan"
+    >
+      {
+        Object.entries(groupedVariants).map(([group, variants]) =>
+          hasMultipleGroups ? (
+            <optgroup label={group}>
+              {variants.map((v) => (
+                <option value={v.label}>{v.label}</option>
+              ))}
+            </optgroup>
+          ) : (
+            variants.map((v) => <option value={v.label}>{v.label}</option>)
+          ),
+        )
+      }
+    </select>
+  </div>
+
+  <p class="text-xs text-brand-muted">
+    After checkout, email your design to <a href="mailto:hello@kustomfits.com" class="text-brand-cyan hover:underline">hello@kustomfits.com</a> — we'll send a proof before printing.
+  </p>
+
+  <button
+    type="submit"
+    class="w-full rounded-full bg-brand-cyan py-3 font-display text-lg tracking-wide text-brand-black transition hover:bg-white"
+  >
+    Add to cart — {formatPrice(product.price)}
+  </button>
+</form>

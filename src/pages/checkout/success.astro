@@ -1,0 +1,39 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+---
+
+<Layout title="Order confirmed" description="Your Kustom Fits order has been received.">
+  <Header slot="header" />
+
+  <section class="px-4 py-12 sm:px-6">
+    <div class="mx-auto max-w-2xl text-center">
+      <div class="rounded-2xl border border-brand-cyan/30 bg-brand-cyan/5 p-8 sm:p-12">
+        <p class="font-display text-4xl tracking-wide text-brand-cyan">ORDER CONFIRMED</p>
+        <p class="mt-4 text-brand-gray">
+          Thank you for your order! Payment was successful.
+        </p>
+        <p class="mt-4 text-sm text-brand-gray">
+          Next step: email your design to
+          <a href="mailto:hello@kustomfits.com" class="text-brand-cyan hover:underline">hello@kustomfits.com</a>
+          with your order details. We'll send a digital proof before printing.
+        </p>
+        <a
+          href="/shop"
+          class="mt-8 inline-block rounded-full bg-brand-cyan px-8 py-3 font-display text-lg tracking-wide text-brand-black transition hover:bg-white"
+        >
+          Continue shopping
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+
+  <script>
+    import { saveCart } from "../../lib/cart";
+
+    saveCart([]);
+  </script>
+</Layout>

@@ -1,0 +1,112 @@
+---
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "/shop", label: "Shop" },
+  { href: "/about", label: "About" },
+  { href: "/blog", label: "Blog" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
+];
+---
+
+<header class="sticky top-0 z-40 border-b border-white/10 bg-brand-black/95 backdrop-blur-md">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <a href="/" class="group flex items-center gap-3">
+      <img
+        src="/logo.png"
+        alt="Kustom Fits"
+        class="h-10 w-auto object-contain sm:h-12"
+      />
+    </a>
+
+    <nav class="hidden items-center gap-6 md:flex" aria-label="Main">
+      {
+        navLinks.map((link) => (
+          <a
+            href={link.href}
+            class="text-sm font-medium text-brand-gray transition hover:text-brand-cyan"
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="flex items-center gap-3">
+      <button
+        id="cart-open"
+        type="button"
+        class="relative rounded-full border border-white/15 bg-brand-card px-4 py-2 text-sm font-medium text-white transition hover:border-brand-cyan hover:text-brand-cyan"
+        aria-label="Open cart"
+      >
+        Cart
+        <span
+          id="cart-count"
+          class="absolute -right-1 -top-1 hidden min-h-5 min-w-5 rounded-full bg-brand-cyan px-1 text-center text-xs font-bold leading-5 text-brand-black"
+        >
+          0
+        </span>
+      </button>
+
+      <details class="relative md:hidden">
+        <summary class="cursor-pointer list-none rounded-full border border-white/15 px-3 py-2 text-sm">
+          Menu
+        </summary>
+        <nav class="absolute right-0 mt-2 w-44 rounded-2xl border border-white/10 bg-brand-card p-3 shadow-xl">
+          {
+            navLinks.map((link) => (
+              <a href={link.href} class="block rounded-lg px-3 py-2 text-sm hover:bg-brand-dark">
+                {link.label}
+              </a>
+            ))
+          }
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div id="cart-overlay" class="fixed inset-0 z-50 hidden bg-black/60" aria-hidden="true"></div>
+
+<aside
+  id="cart-drawer"
+  class="fixed right-0 top-0 z-50 flex h-full w-full max-w-md translate-x-full flex-col border-l border-white/10 bg-brand-black shadow-2xl transition-transform duration-300"
+  aria-hidden="true"
+  aria-label="Shopping cart"
+>
+  <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+    <h2 class="font-display text-xl tracking-wide">Your cart</h2>
+    <button id="cart-close" type="button" class="rounded-full px-3 py-1 text-brand-gray hover:bg-brand-card" aria-label="Close cart">
+      ✕
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto px-5 py-4">
+    <p id="cart-empty" class="text-center text-brand-gray">Your cart is empty — pick a product and make it yours.</p>
+    <ul id="cart-items" class="space-y-4"></ul>
+  </div>
+
+  <div id="cart-footer" class="hidden border-t border-white/10 px-5 py-4">
+    <dl class="space-y-2 text-sm">
+      <div class="flex justify-between">
+        <dt class="text-brand-gray">Subtotal</dt>
+        <dd id="cart-subtotal">£0.00</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-brand-gray">UK shipping</dt>
+        <dd id="cart-shipping">£3.95</dd>
+      </div>
+      <div class="flex justify-between border-t border-white/10 pt-2 text-base font-semibold">
+        <dt>Total</dt>
+        <dd id="cart-total">£0.00</dd>
+      </div>
+    </dl>
+    <p class="mt-2 text-xs text-brand-muted">Free UK delivery on orders over £40</p>
+    <a
+      href="/checkout"
+      class="mt-4 block w-full rounded-full bg-brand-cyan py-3 text-center font-display text-lg tracking-wide text-brand-black transition hover:bg-white"
+    >
+      Checkout
+    </a>
+  </div>
+</aside>

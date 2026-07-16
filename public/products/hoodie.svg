@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#141414"/>
+  <path d="M130 120 L170 90 L230 90 L270 120 L290 140 L270 160 L270 300 L130 300 L130 160 L110 140 Z" fill="#1a1a1a" stroke="#00d4ff" stroke-width="2"/>
+  <rect x="175" y="90" width="50" height="30" rx="4" fill="#2563eb"/>
+  <text x="200" y="340" text-anchor="middle" fill="#71717a" font-family="system-ui,sans-serif" font-size="14">HOODIE</text>
+</svg>

@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-black: #0a0a0a;
+  --color-brand-dark: #141414;
+  --color-brand-card: #1a1a1a;
+  --color-brand-cyan: #00d4ff;
+  --color-brand-blue: #2563eb;
+  --color-brand-blue-deep: #1e40af;
+  --color-brand-gray: #a1a1aa;
+  --color-brand-muted: #71717a;
+  --font-display: "Bebas Neue", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-brand-black text-white antialiased;
+    font-family: var(--font-body);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+}
+
+@layer utilities {
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-brand-cyan to-brand-blue bg-clip-text text-transparent;
+  }
+
+  .text-glow-cyan {
+    text-shadow:
+      0 0 12px rgb(0 212 255 / 0.6),
+      0 0 28px rgb(37 99 235 / 0.35);
+  }
+
+  .urban-grid {
+    background-image:
+      linear-gradient(rgb(0 212 255 / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(0 212 255 / 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+}

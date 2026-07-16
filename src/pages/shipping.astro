@@ -1,0 +1,48 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Layout title="Shipping & Returns" description="Kustom Fits UK shipping — £3.95 flat rate or free over £40. Custom print delivery info.">
+  <Header slot="header" />
+
+  <section class="px-4 py-12 sm:px-6">
+    <div class="mx-auto max-w-3xl space-y-10">
+      <div>
+        <h1 class="font-display text-4xl tracking-wide text-white">Shipping & returns</h1>
+        <p class="mt-3 text-brand-gray">We currently ship across the United Kingdom.</p>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-brand-card p-6 sm:p-8">
+        <h2 class="font-display text-xl tracking-wide text-brand-cyan">UK delivery</h2>
+        <ul class="mt-4 space-y-3 text-brand-gray">
+          <li><strong class="text-white">Flat rate:</strong> £3.95 on all orders</li>
+          <li><strong class="text-white">Free delivery:</strong> on orders over £40</li>
+          <li><strong class="text-white">Production time:</strong> 3–5 working days after artwork approval</li>
+          <li><strong class="text-white">Delivery time:</strong> 2–4 working days after dispatch</li>
+        </ul>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-brand-card p-6 sm:p-8">
+        <h2 class="font-display text-xl tracking-wide text-brand-cyan">Custom order returns</h2>
+        <p class="mt-4 text-brand-gray">
+          Because every item is made to order with your custom design, we cannot accept returns on custom print orders
+          unless the item is faulty or we made an error. If something's wrong, contact us within 14 days at
+          <a href="mailto:hello@kustomfits.com" class="text-brand-cyan hover:text-white">hello@kustomfits.com</a>
+          and we'll make it right.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-brand-card p-6 sm:p-8">
+        <h2 class="font-display text-xl tracking-wide text-brand-cyan">Order issues</h2>
+        <p class="mt-4 text-brand-gray">
+          Wrong item, print defect, or delivery problem? Email us with your order details and photos if applicable — we'll respond as quickly as we can.
+        </p>
+        <a href="/contact" class="mt-4 inline-block text-brand-cyan hover:text-white">Contact us →</a>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Layout>

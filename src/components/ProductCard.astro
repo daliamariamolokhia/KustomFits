@@ -1,0 +1,21 @@
+---
+import type { Product } from "../data/products";
+import { formatPrice } from "../data/products";
+import ProductImage from "./ProductImage.astro";
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+---
+
+<article class="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-brand-card transition hover:border-brand-cyan/40 hover:bg-brand-dark">
+  <a href={`/shop/${product.slug}`} class="flex flex-1 flex-col p-4 sm:p-5">
+    <ProductImage product={product} class="mb-4" />
+    <p class="text-xs uppercase tracking-wider text-brand-cyan">{product.category}</p>
+    <h3 class="mt-1 font-display text-xl tracking-wide text-white">{product.name}</h3>
+    <p class="mt-2 flex-1 text-sm text-brand-gray">{product.description}</p>
+    <p class="mt-4 font-display text-lg tracking-wide text-brand-cyan">{formatPrice(product.price)}</p>
+  </a>
+</article>

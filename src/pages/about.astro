@@ -1,0 +1,65 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Layout title="About" description="About Kustom Fits — custom print specialists for t-shirts, hoodies, tote bags, caps, mugs and more.">
+  <Header slot="header" />
+
+  <section class="px-4 py-12 sm:px-6">
+    <div class="mx-auto max-w-3xl">
+      <p class="font-display text-4xl tracking-wide text-brand-cyan sm:text-5xl">
+        ABOUT US
+      </p>
+      <h1 class="mt-4 font-display text-4xl tracking-wide text-white">Your design. Your fit. Made kustom.</h1>
+
+      <div class="mt-8 space-y-6 leading-relaxed text-brand-gray">
+        <p>
+          <strong class="text-white">Kustom Fits</strong> is built for creators, brands, and anyone who wants to wear something that's truly theirs.
+          We print custom designs on t-shirts, hoodies, tote bags, caps, mugs, and more — turning your artwork into products you can sell, gift, or rock yourself.
+        </p>
+        <p>
+          Whether you're launching a merch drop, printing a one-off gift, or building your personal brand,
+          we make the process simple: <em class="text-brand-cyan">pick a product, send your design, approve the proof, and we handle the rest.</em>
+        </p>
+        <p>
+          Every order gets a digital mock-up before anything goes to print. No surprises, no guesswork — just clean,
+          professional results on quality blanks that hold up.
+        </p>
+      </div>
+
+      <div class="mt-12 grid gap-4 sm:grid-cols-2">
+        <div class="rounded-2xl border border-white/10 p-6">
+          <h2 class="font-display text-lg tracking-wide text-brand-cyan">How it works</h2>
+          <ol class="mt-3 space-y-2 text-sm text-brand-gray">
+            <li>1. Choose your product & options</li>
+            <li>2. Complete checkout</li>
+            <li>3. Email your design file</li>
+            <li>4. Approve your proof</li>
+            <li>5. We print & ship</li>
+          </ol>
+        </div>
+        <div class="rounded-2xl border border-white/10 p-6">
+          <h2 class="font-display text-lg tracking-wide text-brand-cyan">What we print on</h2>
+          <ul class="mt-3 space-y-1 text-sm text-brand-gray">
+            <li>T-shirts & hoodies</li>
+            <li>Tote bags</li>
+            <li>Caps</li>
+            <li>Mugs</li>
+            <li>And more — just ask</li>
+          </ul>
+        </div>
+      </div>
+
+      <a
+        href="/shop"
+        class="mt-10 inline-block rounded-full bg-brand-cyan px-8 py-3 font-display text-lg tracking-wide text-brand-black transition hover:bg-white"
+      >
+        Shop now
+      </a>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Layout>

@@ -1,0 +1,27 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import ProductCard from "../../components/ProductCard.astro";
+import { products } from "../../data/products";
+---
+
+<Layout title="Shop" description="Shop custom print t-shirts, hoodies, tote bags, caps, and mugs at Kustom Fits.">
+  <Header slot="header" />
+
+  <section class="px-4 py-12 sm:px-6">
+    <div class="mx-auto max-w-6xl">
+      <h1 class="font-display text-4xl tracking-wide text-white">Shop</h1>
+      <p class="mt-3 max-w-2xl text-brand-gray">
+        Custom made prints on premium blanks. Pick your product, choose your options, and send your design after checkout.
+      </p>
+      <p class="mt-2 text-sm text-brand-cyan">Free UK delivery on orders over £40 · £3.95 flat rate otherwise</p>
+
+      <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((product) => <ProductCard product={product} />)}
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Layout>
