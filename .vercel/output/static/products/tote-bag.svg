@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
-  <rect width="400" height="400" fill="#141414"/>
-  <rect x="110" y="100" width="180" height="200" rx="4" fill="#1a1a1a" stroke="#00d4ff" stroke-width="2"/>
-  <path d="M110 120 L90 200 L110 200" fill="#1a1a1a" stroke="#00d4ff" stroke-width="2"/>
-  <path d="M290 120 L310 200 L290 200" fill="#1a1a1a" stroke="#00d4ff" stroke-width="2"/>
-  <text x="200" y="340" text-anchor="middle" fill="#71717a" font-family="system-ui,sans-serif" font-size="14">TOTE BAG</text>
-</svg>
