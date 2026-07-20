@@ -2,7 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
-import AddToCart from "../../components/AddToCart.astro";
+import ProductOptions from "../../components/ProductOptions.astro";
 import ProductImage from "../../components/ProductImage.astro";
 import { products, getProduct, formatPrice } from "../../data/products";
 
@@ -18,6 +18,8 @@ const product = getProduct(slug!);
 if (!product) {
   return Astro.redirect("/shop");
 }
+
+const added = Astro.url.searchParams.get("added") === "1";
 ---
 
 <Layout title={product.name} description={product.description}>
@@ -34,15 +36,23 @@ if (!product) {
         <p class="mt-2 font-display text-2xl tracking-wide text-brand-cyan">{formatPrice(product.price)}</p>
         <p class="mt-4 text-brand-gray">{product.description}</p>
 
-        <ul class="mt-6 space-y-2 text-sm text-brand-gray">
-          <li>✓ Custom print with your design</li>
-          <li>✓ Digital proof before production</li>
-          <li>✓ Professional-grade print quality</li>
-          <li>✓ UK delivery in 2–4 working days</li>
-        </ul>
+        {
+          added && (
+            <p class="mt-4 rounded-xl border border-brand-cyan/30 bg-brand-cyan/10 px-4 py-3 text-sm text-brand-gray">
+              Custom design added to cart!
+              <a href="/checkout" class="ml-1 text-brand-cyan hover:underline">Go to checkout →</a>
+            </p>
+          )
+        }
+
+        <ol class="mt-6 space-y-2 text-sm text-brand-gray">
+          <li><span class="text-brand-cyan">1.</span> Choose your size & colour</li>
+          <li><span class="text-brand-cyan">2.</span> Design your print in our studio</li>
+          <li><span class="text-brand-cyan">3.</span> Add to cart & checkout</li>
+        </ol>
 
         <div class="mt-8 rounded-2xl border border-white/10 bg-brand-card p-6">
-          <AddToCart product={product} />
+          <ProductOptions product={product} />
         </div>
       </div>
     </div>

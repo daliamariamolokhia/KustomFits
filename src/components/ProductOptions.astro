@@ -1,0 +1,77 @@
+---
+import type { Product } from "../data/products";
+import { formatPrice } from "../data/products";
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+
+const groupedVariants = product.variants.reduce<Record<string, typeof product.variants>>(
+  (acc, variant) => {
+    const group = variant.group ?? "Choose option";
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(variant);
+    return acc;
+  },
+  {},
+);
+
+const hasMultipleGroups = Object.keys(groupedVariants).length > 1;
+---
+
+<div class="space-y-4" id="product-options" data-product-slug={product.slug}>
+  <div>
+    <label class="block text-sm text-brand-gray" for="variant">
+      {hasMultipleGroups ? "Size & colour" : "Option"}
+    </label>
+    <select
+      id="variant"
+      name="variant"
+      required
+      class="mt-1 w-full rounded-xl border border-white/15 bg-brand-black px-4 py-3 text-white outline-none focus:border-brand-cyan"
+    >
+      {
+        Object.entries(groupedVariants).map(([group, variants]) =>
+          hasMultipleGroups ? (
+            <optgroup label={group}>
+              {variants.map((v) => (
+                <option value={v.label}>{v.label}</option>
+              ))}
+            </optgroup>
+          ) : (
+            variants.map((v) => <option value={v.label}>{v.label}</option>)
+          ),
+        )
+      }
+    </select>
+  </div>
+
+  <a
+    id="design-link"
+    href={`/shop/${product.slug}/design`}
+    class="flex w-full items-center justify-center gap-2 rounded-full bg-brand-cyan py-3 font-display text-lg tracking-wide text-brand-black transition hover:bg-white"
+  >
+    Design your print →
+  </a>
+
+  <p class="text-center text-xs text-brand-muted">
+    Upload artwork, add text, or pick a template — then add to cart.
+  </p>
+</div>
+
+<script>
+  const root = document.getElementById("product-options");
+  const select = document.getElementById("variant") as HTMLSelectElement;
+  const link = document.getElementById("design-link") as HTMLAnchorElement;
+  const slug = root?.dataset.productSlug;
+
+  function updateLink() {
+    if (!link || !slug) return;
+    link.href = `/shop/${slug}/design?variant=${encodeURIComponent(select.value)}`;
+  }
+
+  select?.addEventListener("change", updateLink);
+  updateLink();
+</script>

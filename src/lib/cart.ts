@@ -8,9 +8,16 @@ export interface CartItem {
   variant: string;
   price: number;
   quantity: number;
+  designId?: string;
+  designLabel?: string;
+  designPreview?: string;
 }
 
 const STORAGE_KEY = "kustom-fits-cart";
+
+export function cartItemKey(item: Pick<CartItem, "productId" | "variant" | "designId">): string {
+  return `${item.productId}::${item.variant}::${item.designId ?? "plain"}`;
+}
 
 export function getCart(): CartItem[] {
   if (typeof window === "undefined") return [];
@@ -29,8 +36,8 @@ export function saveCart(items: CartItem[]) {
 
 export function addToCart(item: Omit<CartItem, "quantity">, quantity = 1) {
   const cart = getCart();
-  const key = `${item.productId}::${item.variant}`;
-  const existing = cart.find((i) => `${i.productId}::${i.variant}` === key);
+  const key = cartItemKey(item);
+  const existing = cart.find((i) => cartItemKey(i) === key);
 
   if (existing) {
     existing.quantity += quantity;
@@ -41,10 +48,10 @@ export function addToCart(item: Omit<CartItem, "quantity">, quantity = 1) {
   saveCart(cart);
 }
 
-export function updateQuantity(productId: string, variant: string, quantity: number) {
+export function updateQuantity(productId: string, variant: string, quantity: number, designId?: string) {
   const cart = getCart();
-  const key = `${productId}::${variant}`;
-  const idx = cart.findIndex((i) => `${i.productId}::${i.variant}` === key);
+  const key = cartItemKey({ productId, variant, designId });
+  const idx = cart.findIndex((i) => cartItemKey(i) === key);
 
   if (idx === -1) return;
 
@@ -57,8 +64,8 @@ export function updateQuantity(productId: string, variant: string, quantity: num
   saveCart(cart);
 }
 
-export function removeFromCart(productId: string, variant: string) {
-  updateQuantity(productId, variant, 0);
+export function removeFromCart(productId: string, variant: string, designId?: string) {
+  updateQuantity(productId, variant, 0, designId);
 }
 
 export function cartSubtotal(items: CartItem[]): number {

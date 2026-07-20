@@ -67,7 +67,10 @@ export const POST: APIRoute = async ({ request, url }) => {
   }
 
   const orderSummary = body.items
-    .map((item) => `${item.name} (${item.variant}) × ${item.quantity}`)
+    .map((item) => {
+      const design = item.designLabel ? ` [${item.designLabel}]` : "";
+      return `${item.name} (${item.variant})${design} × ${item.quantity}`;
+    })
     .join("; ");
 
   try {

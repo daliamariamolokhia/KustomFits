@@ -55,9 +55,9 @@ import Footer from "../components/Footer.astro";
         </div>
 
         <div class="rounded-2xl border border-white/10 bg-brand-card p-6">
-          <h3 class="font-display text-sm tracking-widest text-brand-cyan">AFTER PAYMENT</h3>
+          <h3 class="font-display text-sm tracking-widest text-brand-cyan">YOUR DESIGN</h3>
           <p class="mt-2 text-sm text-brand-gray">
-            Email your design to <a href="mailto:hello@kustomfits.com" class="text-brand-cyan hover:underline">hello@kustomfits.com</a> with your order details. Include your preferred print placement and any special instructions. We'll send a proof before printing.
+            Your custom print is saved with your order — no need to email artwork separately unless you want to send a higher-resolution file.
           </p>
         </div>
       </div>
@@ -96,7 +96,11 @@ import Footer from "../components/Footer.astro";
           .map(
             (item) => `
             <li class="flex justify-between gap-4">
-              <span>${item.name} <span class="text-brand-muted">(${item.variant})</span> × ${item.quantity}</span>
+              <span>
+                ${item.name} <span class="text-brand-muted">(${item.variant})</span>
+                ${item.designLabel ? `<br /><span class="text-xs text-brand-cyan">${item.designLabel}</span>` : ""}
+                × ${item.quantity}
+              </span>
               <span>${formatGBP(item.price * item.quantity)}</span>
             </li>
           `,

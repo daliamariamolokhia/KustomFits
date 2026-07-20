@@ -7,7 +7,7 @@ export const faqItems: FaqItem[] = [
   {
     question: "How does custom printing work?",
     answer:
-      "Choose your product, pick your size and colour, then add to bag. After checkout, email us your design file (PNG, JPG, or vector) and we'll confirm the print before production. Need help with artwork? Contact us — we're happy to assist.",
+      "Choose your product and size/colour, then open our Design Studio. Upload your artwork, add custom text, or start from a template — drag elements to position them on the product mockup. Add to cart when you're happy, and we'll send a digital proof before printing.",
   },
   {
     question: "What file format should my design be?",
