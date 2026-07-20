@@ -5,6 +5,7 @@ export interface DesignLayer {
   y: number;
   scale: number;
   rotation: number;
+  hidden?: boolean;
   text?: string;
   font?: string;
   color?: string;

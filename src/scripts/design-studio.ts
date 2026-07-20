@@ -18,7 +18,12 @@ interface StudioProduct {
   variant: string;
 }
 
+type DragMode = "none" | "move" | "rotate" | "resize";
+type HandleName = "nw" | "ne" | "sw" | "se" | "rotate";
+
 const CANVAS_SIZE = 520;
+const MAX_HISTORY = 20;
+const HANDLE_RADIUS = 10;
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
@@ -27,8 +32,21 @@ let mockup: MockupConfig;
 let productColor: string;
 let layers: DesignLayer[] = [];
 let selectedId: string | null = null;
+let dragMode: DragMode = "none";
+let activeHandle: HandleName | null = null;
 let dragOffset = { x: 0, y: 0 };
-let isDragging = false;
+let pointerStart = { x: 0, y: 0 };
+let resizeStartScale = 1;
+let rotateStartAngle = 0;
+let layerStartRotation = 0;
+let historyCommitted = false;
+
+let history: DesignLayer[][] = [[]];
+let historyIndex = 0;
+
+function cloneLayers(source: DesignLayer[]): DesignLayer[] {
+  return JSON.parse(JSON.stringify(source)) as DesignLayer[];
+}
 
 function printRect() {
   return {
@@ -45,6 +63,129 @@ function layerId() {
 
 function getSelectedLayer() {
   return layers.find((l) => l.id === selectedId);
+}
+
+function visibleLayers() {
+  return layers.filter((l) => !l.hidden);
+}
+
+function pushHistory() {
+  history = history.slice(0, historyIndex + 1);
+  history.push(cloneLayers(layers));
+  if (history.length > MAX_HISTORY) {
+    history.shift();
+  } else {
+    historyIndex++;
+  }
+  updateUndoRedoButtons();
+}
+
+function undo() {
+  if (historyIndex <= 0) return;
+  historyIndex--;
+  layers = cloneLayers(history[historyIndex]);
+  selectedId = null;
+  syncUI();
+}
+
+function redo() {
+  if (historyIndex >= history.length - 1) return;
+  historyIndex++;
+  layers = cloneLayers(history[historyIndex]);
+  selectedId = null;
+  syncUI();
+}
+
+function updateUndoRedoButtons() {
+  const undoBtn = document.getElementById("undo-btn") as HTMLButtonElement | null;
+  const redoBtn = document.getElementById("redo-btn") as HTMLButtonElement | null;
+  if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+  if (redoBtn) redoBtn.disabled = historyIndex >= history.length - 1;
+}
+
+function syncUI() {
+  updateLayerControls();
+  renderLayersPanel();
+  void render();
+}
+
+function layerLabel(layer: DesignLayer) {
+  if (layer.type === "text") return layer.text?.slice(0, 24) || "Text";
+  return "Image";
+}
+
+function renderLayersPanel() {
+  const list = document.getElementById("layers-list");
+  const empty = document.getElementById("layers-empty");
+  if (!list || !empty) return;
+
+  if (layers.length === 0) {
+    list.innerHTML = "";
+    empty.classList.remove("hidden");
+    return;
+  }
+
+  empty.classList.add("hidden");
+  list.innerHTML = [...layers]
+    .reverse()
+    .map((layer) => {
+      const idx = layers.indexOf(layer);
+      const isSelected = layer.id === selectedId;
+      const hiddenMark = layer.hidden ? "opacity-40" : "";
+      const selectedMark = isSelected ? "border-brand-cyan bg-brand-cyan/10" : "border-white/10";
+      return `
+        <li class="flex items-center gap-1 rounded-lg border ${selectedMark} ${hiddenMark} p-1.5">
+          <button type="button" data-layer-select="${layer.id}" class="min-w-0 flex-1 truncate px-2 py-1 text-left text-xs text-white">
+            ${layer.type === "text" ? "T" : "🖼"} ${layerLabel(layer)}
+          </button>
+          <button type="button" data-layer-toggle="${layer.id}" class="rounded px-1.5 py-1 text-xs text-brand-gray hover:text-brand-cyan" title="${layer.hidden ? "Show" : "Hide"}">${layer.hidden ? "👁‍🗨" : "👁"}</button>
+          <button type="button" data-layer-up="${idx}" class="rounded px-1.5 py-1 text-xs text-brand-gray hover:text-brand-cyan" title="Bring forward">↑</button>
+          <button type="button" data-layer-down="${idx}" class="rounded px-1.5 py-1 text-xs text-brand-gray hover:text-brand-cyan" title="Send back">↓</button>
+        </li>
+      `;
+    })
+    .join("");
+
+  list.querySelectorAll("[data-layer-select]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedId = btn.getAttribute("data-layer-select");
+      syncUI();
+    });
+  });
+
+  list.querySelectorAll("[data-layer-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-layer-toggle")!;
+      const layer = layers.find((l) => l.id === id);
+      if (layer) {
+        layer.hidden = !layer.hidden;
+        pushHistory();
+        syncUI();
+      }
+    });
+  });
+
+  list.querySelectorAll("[data-layer-up]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.getAttribute("data-layer-up"));
+      if (idx < layers.length - 1) {
+        [layers[idx], layers[idx + 1]] = [layers[idx + 1], layers[idx]];
+        pushHistory();
+        syncUI();
+      }
+    });
+  });
+
+  list.querySelectorAll("[data-layer-down]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.getAttribute("data-layer-down"));
+      if (idx > 0) {
+        [layers[idx], layers[idx - 1]] = [layers[idx - 1], layers[idx]];
+        pushHistory();
+        syncUI();
+      }
+    });
+  });
 }
 
 function drawMockup() {
@@ -140,7 +281,119 @@ function drawMockup() {
   ctx.setLineDash([]);
 }
 
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function getLayerDimensions(layer: DesignLayer) {
+  const area = printRect();
+  if (layer.type === "text" && layer.text) {
+    const size = (layer.fontSize ?? 32) * layer.scale;
+    ctx.font = `bold ${size}px ${layer.font ?? "Bebas Neue"}, sans-serif`;
+    const w = ctx.measureText(layer.text).width;
+    const h = size;
+    return { w: Math.max(w, 20), h: Math.max(h, 20) };
+  }
+  return { w: 80 * layer.scale, h: 80 * layer.scale };
+}
+
+function getLayerCenter(layer: DesignLayer) {
+  const area = printRect();
+  return {
+    x: area.x + layer.x * area.w,
+    y: area.y + layer.y * area.h,
+  };
+}
+
+function layerBounds(layer: DesignLayer) {
+  const center = getLayerCenter(layer);
+  const { w, h } = getLayerDimensions(layer);
+  return {
+    x: center.x - w / 2 - 4,
+    y: center.y - h / 2 - 4,
+    w: w + 8,
+    h: h + 8,
+    cx: center.x,
+    cy: center.y,
+  };
+}
+
+function getHandles(layer: DesignLayer) {
+  const b = layerBounds(layer);
+  const cx = b.cx;
+  return {
+    nw: { x: b.x, y: b.y },
+    ne: { x: b.x + b.w, y: b.y },
+    sw: { x: b.x, y: b.y + b.h },
+    se: { x: b.x + b.w, y: b.y + b.h },
+    rotate: { x: cx, y: b.y - 28 },
+  };
+}
+
+function hitTestHandle(mx: number, my: number): HandleName | null {
+  const layer = getSelectedLayer();
+  if (!layer) return null;
+  const handles = getHandles(layer);
+  for (const name of ["rotate", "nw", "ne", "sw", "se"] as HandleName[]) {
+    const pos = handles[name];
+    if (Math.hypot(mx - pos.x, my - pos.y) <= HANDLE_RADIUS + 2) return name;
+  }
+  return null;
+}
+
+function hitTestLayer(mx: number, my: number): DesignLayer | undefined {
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const layer = layers[i];
+    if (layer.hidden) continue;
+    const b = layerBounds(layer);
+    if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) return layer;
+  }
+  return undefined;
+}
+
+function drawSelectionHandles(layer: DesignLayer) {
+  const b = layerBounds(layer);
+  const handles = getHandles(layer);
+
+  ctx.strokeStyle = "#00d4ff";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "#00d4ff";
+  ctx.strokeStyle = "#0a0a0a";
+  ctx.lineWidth = 1.5;
+  for (const name of ["nw", "ne", "sw", "se"] as HandleName[]) {
+    const pos = handles[name];
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, HANDLE_RADIUS / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  const rot = handles.rotate;
+  ctx.beginPath();
+  ctx.moveTo(b.cx, b.y);
+  ctx.lineTo(rot.x, rot.y);
+  ctx.strokeStyle = "#00d4ff";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(rot.x, rot.y, HANDLE_RADIUS / 2 + 1, 0, Math.PI * 2);
+  ctx.fillStyle = "#2563eb";
+  ctx.fill();
+  ctx.strokeStyle = "#00d4ff";
+  ctx.stroke();
+}
+
 async function drawLayer(layer: DesignLayer) {
+  if (layer.hidden) return;
+
   const area = printRect();
   const cx = area.x + layer.x * area.w;
   const cy = area.y + layer.y * area.h;
@@ -170,92 +423,115 @@ async function drawLayer(layer: DesignLayer) {
   }
 
   ctx.restore();
-
-  if (layer.id === selectedId) {
-    ctx.strokeStyle = "#00d4ff";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 3]);
-    const box = layerBounds(layer);
-    ctx.strokeRect(box.x, box.y, box.w, box.h);
-    ctx.setLineDash([]);
-  }
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-function layerBounds(layer: DesignLayer) {
-  const area = printRect();
-  const cx = area.x + layer.x * area.w;
-  const cy = area.y + layer.y * area.h;
-  const size = layer.type === "text" ? (layer.fontSize ?? 32) * layer.scale : 80 * layer.scale;
-  return { x: cx - size / 2 - 4, y: cy - size / 2 - 4, w: size + 8, h: size + 8 };
-}
-
-function hitTest(mx: number, my: number): DesignLayer | undefined {
-  for (let i = layers.length - 1; i >= 0; i--) {
-    const b = layerBounds(layers[i]);
-    if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) return layers[i];
-  }
-  return undefined;
 }
 
 async function render() {
   drawMockup();
   for (const layer of layers) await drawLayer(layer);
+  const selected = getSelectedLayer();
+  if (selected && !selected.hidden) drawSelectionHandles(selected);
 }
 
-function canvasCoords(e: MouseEvent | Touch) {
+function canvasCoords(clientX: number, clientY: number) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = CANVAS_SIZE / rect.width;
   const scaleY = CANVAS_SIZE / rect.height;
   return {
-    x: (e.clientX - rect.left) * scaleX,
-    y: (e.clientY - rect.top) * scaleY,
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY,
   };
 }
 
-function onPointerDown(e: MouseEvent) {
-  const { x, y } = canvasCoords(e);
-  const hit = hitTest(x, y);
+function onPointerDown(clientX: number, clientY: number) {
+  const { x, y } = canvasCoords(clientX, clientY);
+  pointerStart = { x, y };
+  historyCommitted = false;
+
+  const handle = hitTestHandle(x, y);
+  if (handle && getSelectedLayer()) {
+    activeHandle = handle;
+    const layer = getSelectedLayer()!;
+    if (handle === "rotate") {
+      dragMode = "rotate";
+      const center = getLayerCenter(layer);
+      rotateStartAngle = Math.atan2(y - center.y, x - center.x);
+      layerStartRotation = layer.rotation;
+    } else {
+      dragMode = "resize";
+      resizeStartScale = layer.scale;
+    }
+    return;
+  }
+
+  const hit = hitTestLayer(x, y);
   if (hit) {
     selectedId = hit.id;
-    isDragging = true;
+    dragMode = "move";
+    const center = getLayerCenter(hit);
+    dragOffset = { x: x - center.x, y: y - center.y };
+    syncUI();
+    return;
+  }
+
+  selectedId = null;
+  dragMode = "none";
+  syncUI();
+}
+
+function onPointerMove(clientX: number, clientY: number) {
+  const { x, y } = canvasCoords(clientX, clientY);
+  const layer = getSelectedLayer();
+  if (!layer || dragMode === "none") return;
+
+  if (dragMode === "move") {
     const area = printRect();
-    const cx = area.x + hit.x * area.w;
-    const cy = area.y + hit.y * area.h;
-    dragOffset = { x: x - cx, y: y - cy };
-    updateLayerControls();
+    const cx = x - dragOffset.x;
+    const cy = y - dragOffset.y;
+    layer.x = Math.max(0.05, Math.min(0.95, (cx - area.x) / area.w));
+    layer.y = Math.max(0.05, Math.min(0.95, (cy - area.y) / area.h));
     void render();
-  } else {
-    selectedId = null;
-    updateLayerControls();
+    return;
+  }
+
+  if (dragMode === "rotate") {
+    const center = getLayerCenter(layer);
+    const angle = Math.atan2(y - center.y, x - center.x);
+    const delta = ((angle - rotateStartAngle) * 180) / Math.PI;
+    layer.rotation = Math.round(layerStartRotation + delta);
+    updateRotationInput(layer.rotation);
     void render();
+    return;
+  }
+
+  if (dragMode === "resize") {
+    const center = getLayerCenter(layer);
+    const startDist = Math.hypot(pointerStart.x - center.x, pointerStart.y - center.y);
+    const dist = Math.hypot(x - center.x, y - center.y);
+    if (startDist > 0) {
+      layer.scale = Math.max(0.25, Math.min(3, resizeStartScale * (dist / startDist)));
+      updateScaleInput(layer.scale);
+      void render();
+    }
   }
 }
 
-function onPointerMove(e: MouseEvent) {
-  if (!isDragging || !selectedId) return;
-  const { x, y } = canvasCoords(e);
-  const area = printRect();
-  const layer = getSelectedLayer();
-  if (!layer) return;
-
-  const cx = x - dragOffset.x;
-  const cy = y - dragOffset.y;
-  layer.x = Math.max(0.05, Math.min(0.95, (cx - area.x) / area.w));
-  layer.y = Math.max(0.05, Math.min(0.95, (cy - area.y) / area.h));
-  void render();
+function onPointerUp() {
+  if (dragMode !== "none" && !historyCommitted) {
+    pushHistory();
+    historyCommitted = true;
+  }
+  dragMode = "none";
+  activeHandle = null;
 }
 
-function onPointerUp() {
-  isDragging = false;
+function updateScaleInput(scale: number) {
+  const input = document.getElementById("layer-scale") as HTMLInputElement | null;
+  if (input) input.value = String(Math.round(scale * 100));
+}
+
+function updateRotationInput(rotation: number) {
+  const input = document.getElementById("layer-rotation") as HTMLInputElement | null;
+  if (input) input.value = String(Math.round(rotation));
 }
 
 function updateLayerControls() {
@@ -269,8 +545,8 @@ function updateLayerControls() {
   }
 
   panel.classList.remove("hidden");
-  const scaleInput = document.getElementById("layer-scale") as HTMLInputElement;
-  if (scaleInput) scaleInput.value = String(Math.round(layer.scale * 100));
+  updateScaleInput(layer.scale);
+  updateRotationInput(layer.rotation);
 
   if (layer.type === "text") {
     (document.getElementById("text-edit-group") as HTMLElement)?.classList.remove("hidden");
@@ -296,8 +572,8 @@ function addTextLayer(text: string, font: string, color: string, fontSize: numbe
     fontSize,
   });
   selectedId = layers[layers.length - 1].id;
-  void render();
-  updateLayerControls();
+  pushHistory();
+  syncUI();
 }
 
 function applyTemplate(templateId: string) {
@@ -305,24 +581,34 @@ function applyTemplate(templateId: string) {
   if (!template) return;
   layers = template.layers.map((l) => ({ ...l, id: layerId() }));
   selectedId = layers[0]?.id ?? null;
-  void render();
-  updateLayerControls();
+  pushHistory();
+  syncUI();
+}
+
+function deleteSelectedLayer() {
+  if (!selectedId) return;
+  layers = layers.filter((l) => l.id !== selectedId);
+  selectedId = null;
+  pushHistory();
+  syncUI();
 }
 
 async function exportDesign(): Promise<{ preview: string; printExport: string; label: string }> {
+  const prevSelected = selectedId;
+  selectedId = null;
   await render();
 
   const preview = canvas.toDataURL("image/jpeg", 0.85);
+  selectedId = prevSelected;
+  await render();
 
   const area = printRect();
   const printCanvas = document.createElement("canvas");
   printCanvas.width = area.w * 2;
   printCanvas.height = area.h * 2;
   const pctx = printCanvas.getContext("2d")!;
-  pctx.fillStyle = "transparent";
-  pctx.fillRect(0, 0, printCanvas.width, printCanvas.height);
 
-  for (const layer of layers) {
+  for (const layer of visibleLayers()) {
     pctx.save();
     pctx.translate(layer.x * printCanvas.width, layer.y * printCanvas.height);
     pctx.rotate((layer.rotation * Math.PI) / 180);
@@ -346,11 +632,11 @@ async function exportDesign(): Promise<{ preview: string; printExport: string; l
     pctx.restore();
   }
 
-  const textParts = layers.filter((l) => l.type === "text").map((l) => l.text);
+  const textParts = visibleLayers().filter((l) => l.type === "text").map((l) => l.text);
   const label =
     textParts.length > 0
       ? `Custom: ${textParts.join(" / ").slice(0, 40)}`
-      : layers.some((l) => l.type === "image")
+      : visibleLayers().some((l) => l.type === "image")
         ? "Custom: uploaded artwork"
         : "Custom design";
 
@@ -375,6 +661,28 @@ function bindTabs() {
 }
 
 function bindControls() {
+  document.getElementById("undo-btn")?.addEventListener("click", undo);
+  document.getElementById("redo-btn")?.addEventListener("click", redo);
+
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    }
+    if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+      e.preventDefault();
+      redo();
+    }
+    if (e.key === "Delete" || e.key === "Backspace") {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+      if (selectedId) {
+        e.preventDefault();
+        deleteSelectedLayer();
+      }
+    }
+  });
+
   document.getElementById("add-text-btn")?.addEventListener("click", () => {
     const text = (document.getElementById("new-text") as HTMLInputElement).value.trim();
     if (!text) return;
@@ -382,6 +690,7 @@ function bindControls() {
     const color = (document.getElementById("new-color") as HTMLInputElement).value;
     const fontSize = Number((document.getElementById("new-font-size") as HTMLInputElement).value);
     addTextLayer(text, font, color, fontSize);
+    (document.getElementById("new-text") as HTMLInputElement).value = "";
   });
 
   document.getElementById("upload-image")?.addEventListener("change", (e) => {
@@ -403,10 +712,11 @@ function bindControls() {
         imageData: reader.result as string,
       });
       selectedId = layers[layers.length - 1].id;
-      void render();
-      updateLayerControls();
+      pushHistory();
+      syncUI();
     };
     reader.readAsDataURL(file);
+    (e.target as HTMLInputElement).value = "";
   });
 
   document.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((btn) => {
@@ -419,14 +729,25 @@ function bindControls() {
     layer.scale = Number((e.target as HTMLInputElement).value) / 100;
     void render();
   });
+  document.getElementById("layer-scale")?.addEventListener("change", () => pushHistory());
+
+  document.getElementById("layer-rotation")?.addEventListener("input", (e) => {
+    const layer = getSelectedLayer();
+    if (!layer) return;
+    layer.rotation = Number((e.target as HTMLInputElement).value);
+    void render();
+  });
+  document.getElementById("layer-rotation")?.addEventListener("change", () => pushHistory());
 
   document.getElementById("edit-text")?.addEventListener("input", (e) => {
     const layer = getSelectedLayer();
     if (layer?.type === "text") {
       layer.text = (e.target as HTMLInputElement).value;
+      renderLayersPanel();
       void render();
     }
   });
+  document.getElementById("edit-text")?.addEventListener("change", () => pushHistory());
 
   document.getElementById("edit-color")?.addEventListener("input", (e) => {
     const layer = getSelectedLayer();
@@ -435,6 +756,7 @@ function bindControls() {
       void render();
     }
   });
+  document.getElementById("edit-color")?.addEventListener("change", () => pushHistory());
 
   document.getElementById("edit-font-size")?.addEventListener("input", (e) => {
     const layer = getSelectedLayer();
@@ -443,17 +765,12 @@ function bindControls() {
       void render();
     }
   });
+  document.getElementById("edit-font-size")?.addEventListener("change", () => pushHistory());
 
-  document.getElementById("layer-delete")?.addEventListener("click", () => {
-    if (!selectedId) return;
-    layers = layers.filter((l) => l.id !== selectedId);
-    selectedId = null;
-    updateLayerControls();
-    void render();
-  });
+  document.getElementById("layer-delete")?.addEventListener("click", deleteSelectedLayer);
 
   document.getElementById("add-to-cart-design")?.addEventListener("click", async () => {
-    if (layers.length === 0) {
+    if (visibleLayers().length === 0) {
       alert("Add a design first — upload an image, add text, or pick a template.");
       return;
     }
@@ -494,6 +811,34 @@ function bindControls() {
   });
 }
 
+function bindPointerEvents() {
+  canvas.addEventListener("mousedown", (e) => onPointerDown(e.clientX, e.clientY));
+  canvas.addEventListener("mousemove", (e) => onPointerMove(e.clientX, e.clientY));
+  window.addEventListener("mouseup", onPointerUp);
+
+  canvas.addEventListener(
+    "touchstart",
+    (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      onPointerDown(touch.clientX, touch.clientY);
+    },
+    { passive: false },
+  );
+
+  canvas.addEventListener(
+    "touchmove",
+    (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      onPointerMove(touch.clientX, touch.clientY);
+    },
+    { passive: false },
+  );
+
+  window.addEventListener("touchend", onPointerUp);
+}
+
 export function initDesignStudio() {
   const root = document.getElementById("design-studio");
   if (!root) return;
@@ -510,12 +855,14 @@ export function initDesignStudio() {
   canvas.width = CANVAS_SIZE;
   canvas.height = CANVAS_SIZE;
 
-  canvas.addEventListener("mousedown", onPointerDown);
-  canvas.addEventListener("mousemove", onPointerMove);
-  window.addEventListener("mouseup", onPointerUp);
+  history = [cloneLayers(layers)];
+  historyIndex = 0;
+  updateUndoRedoButtons();
 
+  bindPointerEvents();
   bindTabs();
   bindControls();
+  renderLayersPanel();
   void render();
 }
 
