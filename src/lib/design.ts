@@ -1,6 +1,6 @@
 export interface DesignLayer {
   id: string;
-  type: "text" | "image";
+  type: "text" | "image" | "shape";
   x: number;
   y: number;
   scale: number;
@@ -11,6 +11,7 @@ export interface DesignLayer {
   color?: string;
   fontSize?: number;
   imageData?: string;
+  shapeId?: string;
 }
 
 export interface SavedDesign {

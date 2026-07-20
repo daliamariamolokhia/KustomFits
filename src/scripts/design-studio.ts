@@ -1,4 +1,5 @@
 import { designTemplates } from "../data/design-templates";
+import { drawShapePath } from "../data/design-shapes";
 import {
   createDesignId,
   mockupConfigs,
@@ -111,7 +112,14 @@ function syncUI() {
 
 function layerLabel(layer: DesignLayer) {
   if (layer.type === "text") return layer.text?.slice(0, 24) || "Text";
+  if (layer.type === "shape") return layer.shapeId ? layer.shapeId.charAt(0).toUpperCase() + layer.shapeId.slice(1) : "Shape";
   return "Image";
+}
+
+function layerIcon(layer: DesignLayer) {
+  if (layer.type === "text") return "T";
+  if (layer.type === "shape") return "◆";
+  return "🖼";
 }
 
 function renderLayersPanel() {
@@ -136,7 +144,7 @@ function renderLayersPanel() {
       return `
         <li class="flex items-center gap-1 rounded-lg border ${selectedMark} ${hiddenMark} p-1.5">
           <button type="button" data-layer-select="${layer.id}" class="min-w-0 flex-1 truncate px-2 py-1 text-left text-xs text-white">
-            ${layer.type === "text" ? "T" : "🖼"} ${layerLabel(layer)}
+            ${layerIcon(layer)} ${layerLabel(layer)}
           </button>
           <button type="button" data-layer-toggle="${layer.id}" class="rounded px-1.5 py-1 text-xs text-brand-gray hover:text-brand-cyan" title="${layer.hidden ? "Show" : "Hide"}">${layer.hidden ? "👁‍🗨" : "👁"}</button>
           <button type="button" data-layer-up="${idx}" class="rounded px-1.5 py-1 text-xs text-brand-gray hover:text-brand-cyan" title="Bring forward">↑</button>
@@ -299,6 +307,10 @@ function getLayerDimensions(layer: DesignLayer) {
     const h = size;
     return { w: Math.max(w, 20), h: Math.max(h, 20) };
   }
+  if (layer.type === "shape") {
+    const size = 60 * layer.scale;
+    return { w: size, h: size };
+  }
   return { w: 80 * layer.scale, h: 80 * layer.scale };
 }
 
@@ -420,6 +432,12 @@ async function drawLayer(layer: DesignLayer) {
     const w = img.width * ratio;
     const h = img.height * ratio;
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  }
+
+  if (layer.type === "shape" && layer.shapeId) {
+    ctx.fillStyle = layer.color ?? "#00d4ff";
+    drawShapePath(ctx, layer.shapeId, 60);
+    ctx.fill();
   }
 
   ctx.restore();
@@ -548,14 +566,55 @@ function updateLayerControls() {
   updateScaleInput(layer.scale);
   updateRotationInput(layer.rotation);
 
-  if (layer.type === "text") {
+  const colorPanel = document.getElementById("color-presets-selected");
+  const isText = layer.type === "text";
+  const isShape = layer.type === "shape";
+
+  if (isText) {
     (document.getElementById("text-edit-group") as HTMLElement)?.classList.remove("hidden");
+    colorPanel?.classList.remove("hidden");
     (document.getElementById("edit-text") as HTMLInputElement).value = layer.text ?? "";
     (document.getElementById("edit-color") as HTMLInputElement).value = layer.color ?? "#ffffff";
+    (document.getElementById("edit-shape-color") as HTMLInputElement).value = layer.color ?? "#ffffff";
+    (document.getElementById("edit-font") as HTMLSelectElement).value = layer.font ?? "Bebas Neue";
     (document.getElementById("edit-font-size") as HTMLInputElement).value = String(layer.fontSize ?? 32);
+  } else if (isShape) {
+    (document.getElementById("text-edit-group") as HTMLElement)?.classList.add("hidden");
+    colorPanel?.classList.remove("hidden");
+    (document.getElementById("edit-shape-color") as HTMLInputElement).value = layer.color ?? "#00d4ff";
   } else {
     (document.getElementById("text-edit-group") as HTMLElement)?.classList.add("hidden");
+    colorPanel?.classList.add("hidden");
   }
+}
+
+function addShapeLayer(shapeId: string, color: string) {
+  layers.push({
+    id: layerId(),
+    type: "shape",
+    x: 0.5,
+    y: 0.5,
+    scale: 1,
+    rotation: 0,
+    shapeId,
+    color,
+  });
+  selectedId = layers[layers.length - 1].id;
+  pushHistory();
+  syncUI();
+}
+
+function applyColorToSelected(color: string) {
+  const layer = getSelectedLayer();
+  if (!layer || (layer.type !== "text" && layer.type !== "shape")) return;
+  layer.color = color;
+  if (layer.type === "text") {
+    (document.getElementById("edit-color") as HTMLInputElement).value = color;
+    (document.getElementById("edit-shape-color") as HTMLInputElement).value = color;
+  } else {
+    (document.getElementById("edit-shape-color") as HTMLInputElement).value = color;
+  }
+  void render();
 }
 
 function addTextLayer(text: string, font: string, color: string, fontSize: number) {
@@ -628,6 +687,11 @@ async function exportDesign(): Promise<{ preview: string; printExport: string; l
       const maxH = printCanvas.height * 0.8;
       const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
       pctx.drawImage(img, (-img.width * ratio) / 2, (-img.height * ratio) / 2, img.width * ratio, img.height * ratio);
+    }
+    if (layer.type === "shape" && layer.shapeId) {
+      pctx.fillStyle = layer.color ?? "#00d4ff";
+      drawShapePath(pctx, layer.shapeId, 60 * 2);
+      pctx.fill();
     }
     pctx.restore();
   }
@@ -721,6 +785,57 @@ function bindControls() {
 
   document.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((btn) => {
     btn.addEventListener("click", () => applyTemplate(btn.dataset.template!));
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-pick-color]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const color = btn.getAttribute("data-pick-color")!;
+      (document.getElementById("new-color") as HTMLInputElement).value = color;
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-shape-color]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const color = btn.getAttribute("data-shape-color")!;
+      (document.getElementById("shape-color") as HTMLInputElement).value = color;
+      document.querySelectorAll("[data-shape-color]").forEach((b) => {
+        b.setAttribute("data-active", String(b === btn));
+      });
+    });
+  });
+  document.querySelector<HTMLButtonElement>("[data-shape-color='#00d4ff']")?.setAttribute("data-active", "true");
+
+  document.querySelectorAll<HTMLButtonElement>("[data-add-shape]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const shapeId = btn.getAttribute("data-add-shape")!;
+      const color = (document.getElementById("shape-color") as HTMLInputElement).value;
+      addShapeLayer(shapeId, color);
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-apply-color]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      applyColorToSelected(btn.getAttribute("data-apply-color")!);
+      pushHistory();
+    });
+  });
+
+  document.getElementById("edit-shape-color")?.addEventListener("input", (e) => {
+    const layer = getSelectedLayer();
+    if (layer?.type === "shape") {
+      layer.color = (e.target as HTMLInputElement).value;
+      void render();
+    }
+  });
+  document.getElementById("edit-shape-color")?.addEventListener("change", () => pushHistory());
+
+  document.getElementById("edit-font")?.addEventListener("change", (e) => {
+    const layer = getSelectedLayer();
+    if (layer?.type === "text") {
+      layer.font = (e.target as HTMLSelectElement).value;
+      pushHistory();
+      void render();
+    }
   });
 
   document.getElementById("layer-scale")?.addEventListener("input", (e) => {

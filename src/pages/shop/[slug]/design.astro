@@ -3,7 +3,10 @@ import Layout from "../../../layouts/Layout.astro";
 import Header from "../../../components/Header.astro";
 import Footer from "../../../components/Footer.astro";
 import { products, getProduct, formatPrice } from "../../../data/products";
-import { designTemplates } from "../../../data/design-templates";
+import { designTemplates, templateCategories } from "../../../data/design-templates";
+import { designFonts } from "../../../data/design-fonts";
+import { designShapes } from "../../../data/design-shapes";
+import { brandColors } from "../../../data/brand-colors";
 
 export function getStaticPaths() {
   return products.map((product) => ({
@@ -49,54 +52,35 @@ const studioProduct = JSON.stringify({
         data-product={studioProduct}
         class="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]"
       >
-        <!-- Canvas preview -->
         <div class="rounded-2xl border border-white/10 bg-brand-card p-4 sm:p-6">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div class="flex gap-2">
-              <button id="undo-btn" type="button" disabled class="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-brand-gray transition hover:border-brand-cyan hover:text-brand-cyan disabled:cursor-not-allowed disabled:opacity-40" title="Undo (Ctrl+Z)">
-                ↩ Undo
-              </button>
-              <button id="redo-btn" type="button" disabled class="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-brand-gray transition hover:border-brand-cyan hover:text-brand-cyan disabled:cursor-not-allowed disabled:opacity-40" title="Redo (Ctrl+Y)">
-                ↪ Redo
-              </button>
+              <button id="undo-btn" type="button" disabled class="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-brand-gray transition hover:border-brand-cyan hover:text-brand-cyan disabled:cursor-not-allowed disabled:opacity-40" title="Undo (Ctrl+Z)">↩ Undo</button>
+              <button id="redo-btn" type="button" disabled class="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-brand-gray transition hover:border-brand-cyan hover:text-brand-cyan disabled:cursor-not-allowed disabled:opacity-40" title="Redo (Ctrl+Y)">↪ Redo</button>
             </div>
             <p class="text-xs text-brand-muted sm:hidden">Tap & drag to move</p>
           </div>
-          <canvas
-            id="design-canvas"
-            class="mx-auto w-full max-w-[520px] touch-none cursor-crosshair rounded-xl"
-            aria-label="Product design preview"
-          ></canvas>
-          <p class="mt-3 text-center text-xs text-brand-muted">
-            Dashed area = print zone
-          </p>
+          <canvas id="design-canvas" class="mx-auto w-full max-w-[520px] touch-none cursor-crosshair rounded-xl" aria-label="Product design preview"></canvas>
+          <p class="mt-3 text-center text-xs text-brand-muted">Dashed area = print zone</p>
         </div>
 
-        <!-- Design tools -->
         <div class="space-y-4">
-          <!-- Layers panel -->
           <div class="rounded-2xl border border-white/10 bg-brand-card p-5">
             <h2 class="font-display tracking-wide text-white">Layers</h2>
             <p id="layers-empty" class="mt-2 text-sm text-brand-muted">No elements yet — upload, add text, or pick a template.</p>
             <ul id="layers-list" class="mt-2 max-h-40 space-y-1 overflow-y-auto"></ul>
           </div>
 
-          <div class="flex gap-1 rounded-xl border border-white/10 bg-brand-card p-1">
-            <button type="button" data-design-tab="upload" class="flex-1 rounded-lg border border-brand-cyan px-3 py-2.5 text-sm font-medium text-brand-cyan">
-              Upload
-            </button>
-            <button type="button" data-design-tab="text" class="flex-1 rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium text-brand-gray">
-              Text
-            </button>
-            <button type="button" data-design-tab="templates" class="flex-1 rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium text-brand-gray">
-              Templates
-            </button>
+          <div class="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-brand-card p-1">
+            <button type="button" data-design-tab="upload" class="rounded-lg border border-brand-cyan px-2 py-2.5 text-xs font-medium text-brand-cyan sm:text-sm">Upload</button>
+            <button type="button" data-design-tab="text" class="rounded-lg border border-transparent px-2 py-2.5 text-xs font-medium text-brand-gray sm:text-sm">Text</button>
+            <button type="button" data-design-tab="templates" class="rounded-lg border border-transparent px-2 py-2.5 text-xs font-medium text-brand-gray sm:text-sm">Templates</button>
+            <button type="button" data-design-tab="shapes" class="rounded-lg border border-transparent px-2 py-2.5 text-xs font-medium text-brand-gray sm:text-sm">Shapes</button>
           </div>
 
-          <!-- Upload panel -->
           <div data-design-panel="upload" class="rounded-2xl border border-white/10 bg-brand-card p-5">
             <h2 class="font-display tracking-wide text-white">Upload artwork</h2>
-            <p class="mt-1 text-sm text-brand-gray">PNG or JPG, max 3MB. High-res files print best.</p>
+            <p class="mt-1 text-sm text-brand-gray">PNG or JPG, max 3MB.</p>
             <label class="mt-4 flex cursor-pointer flex-col items-center rounded-xl border border-dashed border-white/20 bg-brand-black px-4 py-8 transition hover:border-brand-cyan">
               <span class="text-2xl">📁</span>
               <span class="mt-2 text-sm font-medium text-brand-cyan">Choose image</span>
@@ -104,7 +88,6 @@ const studioProduct = JSON.stringify({
             </label>
           </div>
 
-          <!-- Text panel -->
           <div data-design-panel="text" class="hidden rounded-2xl border border-white/10 bg-brand-card p-5">
             <h2 class="font-display tracking-wide text-white">Add text</h2>
             <div class="mt-4 space-y-3">
@@ -112,48 +95,74 @@ const studioProduct = JSON.stringify({
                 <label for="new-text" class="block text-xs text-brand-gray">Your text</label>
                 <input id="new-text" type="text" placeholder="Your brand name" class="mt-1 w-full rounded-xl border border-white/15 bg-brand-black px-4 py-2.5 text-white outline-none focus:border-brand-cyan" />
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label for="new-font" class="block text-xs text-brand-gray">Font</label>
-                  <select id="new-font" class="mt-1 w-full rounded-xl border border-white/15 bg-brand-black px-3 py-2.5 text-white outline-none focus:border-brand-cyan">
-                    <option value="Bebas Neue">Bebas Neue</option>
-                    <option value="Inter">Inter</option>
-                  </select>
+              <div>
+                <label for="new-font" class="block text-xs text-brand-gray">Font</label>
+                <select id="new-font" class="mt-1 w-full rounded-xl border border-white/15 bg-brand-black px-3 py-2.5 text-white outline-none focus:border-brand-cyan">
+                  {designFonts.map((f) => <option value={f.value}>{f.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <p class="text-xs text-brand-gray">Brand colours</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  {brandColors.map((c) => (
+                    <button type="button" data-pick-color={c.value} class="h-8 w-8 rounded-full border-2 border-white/20 transition hover:scale-110 hover:border-brand-cyan" style={`background-color: ${c.value}`} title={c.name} aria-label={c.name}></button>
+                  ))}
                 </div>
-                <div>
-                  <label for="new-color" class="block text-xs text-brand-gray">Colour</label>
-                  <input id="new-color" type="color" value="#00d4ff" class="mt-1 h-[42px] w-full cursor-pointer rounded-xl border border-white/15 bg-brand-black" />
-                </div>
+              </div>
+              <div>
+                <label for="new-color" class="block text-xs text-brand-gray">Custom colour</label>
+                <input id="new-color" type="color" value="#00d4ff" class="mt-1 h-[42px] w-full cursor-pointer rounded-xl border border-white/15 bg-brand-black" />
               </div>
               <div>
                 <label for="new-font-size" class="block text-xs text-brand-gray">Size</label>
                 <input id="new-font-size" type="range" min="14" max="72" value="36" class="mt-1 w-full accent-brand-cyan" />
               </div>
-              <button id="add-text-btn" type="button" class="w-full rounded-full bg-brand-cyan py-2.5 font-display tracking-wide text-brand-black hover:bg-white">
-                Add to design
-              </button>
+              <button id="add-text-btn" type="button" class="w-full rounded-full bg-brand-cyan py-2.5 font-display tracking-wide text-brand-black hover:bg-white">Add to design</button>
             </div>
           </div>
 
-          <!-- Templates panel -->
           <div data-design-panel="templates" class="hidden rounded-2xl border border-white/10 bg-brand-card p-5">
-            <h2 class="font-display tracking-wide text-white">Start from template</h2>
-            <p class="mt-1 text-sm text-brand-gray">Pick a style, then edit the text to make it yours.</p>
-            <div class="mt-4 grid grid-cols-2 gap-2">
-              {designTemplates.map((t) => (
-                <button
-                  type="button"
-                  data-template={t.id}
-                  class="rounded-xl border border-white/10 bg-brand-black px-3 py-4 text-left transition hover:border-brand-cyan hover:bg-brand-dark"
-                >
-                  <span class="text-xl">{t.emoji}</span>
-                  <p class="mt-1 text-sm font-medium text-white">{t.name}</p>
+            <h2 class="font-display tracking-wide text-white">Templates</h2>
+            <p class="mt-1 text-sm text-brand-gray">Pick a style, then edit the text.</p>
+            <div class="mt-4 max-h-64 space-y-4 overflow-y-auto">
+              {templateCategories.map((category) => {
+                const items = designTemplates.filter((t) => t.category === category);
+                return (
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-brand-cyan">{category}</p>
+                    <div class="mt-2 grid grid-cols-2 gap-2">
+                      {items.map((t) => (
+                        <button type="button" data-template={t.id} class="rounded-xl border border-white/10 bg-brand-black px-3 py-3 text-left transition hover:border-brand-cyan hover:bg-brand-dark">
+                          <span class="text-lg">{t.emoji}</span>
+                          <p class="mt-1 text-xs font-medium text-white">{t.name}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div data-design-panel="shapes" class="hidden rounded-2xl border border-white/10 bg-brand-card p-5">
+            <h2 class="font-display tracking-wide text-white">Add shape</h2>
+            <p class="mt-1 text-sm text-brand-gray">Icons and shapes for your design.</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              {brandColors.map((c) => (
+                <button type="button" data-shape-color={c.value} class="shape-color-swatch h-7 w-7 rounded-full border-2 border-white/20 transition hover:scale-110 data-[active=true]:border-brand-cyan" style={`background-color: ${c.value}`} title={c.name} aria-label={c.name}></button>
+              ))}
+            </div>
+            <input id="shape-color" type="hidden" value="#00d4ff" />
+            <div class="mt-4 grid grid-cols-3 gap-2">
+              {designShapes.map((s) => (
+                <button type="button" data-add-shape={s.id} class="rounded-xl border border-white/10 bg-brand-black px-2 py-3 text-center transition hover:border-brand-cyan hover:bg-brand-dark">
+                  <span class="text-xl">{s.emoji}</span>
+                  <p class="mt-1 text-[10px] text-brand-gray">{s.name}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          <!-- Layer controls (shown when element selected) -->
           <div id="layer-controls" class="hidden rounded-2xl border border-brand-cyan/30 bg-brand-cyan/5 p-5">
             <h3 class="font-display text-sm tracking-widest text-brand-cyan">SELECTED ELEMENT</h3>
             <div class="mt-3 grid grid-cols-2 gap-3">
@@ -166,10 +175,25 @@ const studioProduct = JSON.stringify({
                 <input id="layer-rotation" type="range" min="-180" max="180" value="0" class="mt-1 w-full accent-brand-cyan" />
               </div>
             </div>
+            <div id="color-presets-selected" class="mt-3 hidden">
+              <p class="text-xs text-brand-gray">Colour</p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                {brandColors.map((c) => (
+                  <button type="button" data-apply-color={c.value} class="h-7 w-7 rounded-full border-2 border-white/20 transition hover:scale-110 hover:border-brand-cyan" style={`background-color: ${c.value}`} title={c.name} aria-label={c.name}></button>
+                ))}
+              </div>
+              <input id="edit-shape-color" type="color" class="mt-2 h-9 w-full cursor-pointer rounded-lg border border-white/15 bg-brand-black" />
+            </div>
             <div id="text-edit-group" class="mt-3 hidden space-y-3">
               <div>
                 <label for="edit-text" class="block text-xs text-brand-gray">Text</label>
                 <input id="edit-text" type="text" class="mt-1 w-full rounded-xl border border-white/15 bg-brand-black px-3 py-2 text-white outline-none focus:border-brand-cyan" />
+              </div>
+              <div>
+                <label for="edit-font" class="block text-xs text-brand-gray">Font</label>
+                <select id="edit-font" class="mt-1 w-full rounded-xl border border-white/15 bg-brand-black px-3 py-2 text-white outline-none focus:border-brand-cyan">
+                  {designFonts.map((f) => <option value={f.value}>{f.label}</option>)}
+                </select>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
@@ -185,11 +209,7 @@ const studioProduct = JSON.stringify({
             <button id="layer-delete" type="button" class="mt-3 text-xs text-red-400 underline hover:text-red-300">Remove element</button>
           </div>
 
-          <button
-            id="add-to-cart-design"
-            type="button"
-            class="w-full rounded-full bg-brand-cyan py-3 font-display text-lg tracking-wide text-brand-black transition hover:bg-white"
-          >
+          <button id="add-to-cart-design" type="button" class="w-full rounded-full bg-brand-cyan py-3 font-display text-lg tracking-wide text-brand-black transition hover:bg-white">
             Add to cart — {formatPrice(product.price)}
           </button>
         </div>
