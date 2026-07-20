@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import logo from "../assets/logo.png";
 
 interface Props {
   title: string;
@@ -20,7 +21,8 @@ const fullTitle = title === "Home" ? "Kustom Fits — Custom Outfits, Tote Bags,
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <link rel="icon" href="/logo.png" />
+    <link rel="icon" type="image/png" href={logo.src} />
+    <link rel="apple-touch-icon" href={logo.src} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

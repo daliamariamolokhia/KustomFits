@@ -1,4 +1,6 @@
 ---
+import Logo from "./Logo.astro";
+
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/shop", label: "Shop" },
@@ -12,13 +14,7 @@ const navLinks = [
 <header class="sticky top-0 z-40 border-b border-white/10 bg-brand-black/95 backdrop-blur-md">
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
     <a href="/" class="group flex items-center gap-3">
-      <span class="rounded-lg bg-white px-2 py-1 shadow-sm transition group-hover:shadow-brand-cyan/20">
-        <img
-          src="/logo.png"
-          alt="Kustom Fits"
-          class="h-9 w-auto object-contain sm:h-10"
-        />
-      </span>
+      <Logo class="h-9 w-auto object-contain sm:h-10" />
     </a>
 
     <nav class="hidden items-center gap-6 md:flex" aria-label="Main">

@@ -39,6 +39,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   const stripe = new Stripe(secretKey);
   const subtotal = cartSubtotal(body.items);
   const shipping = cartShipping(subtotal);
+  const siteUrl = (import.meta.env.SITE ?? url.origin).replace(/\/$/, "");
 
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = body.items.map((item) => ({
     price_data: {
@@ -73,16 +74,12 @@ export const POST: APIRoute = async ({ request, url }) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
-      success_url: `${url.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${url.origin}/checkout`,
-      customer_email: undefined,
+      automatic_payment_methods: { enabled: true },
+      success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/checkout`,
+      shipping_address_collection: { allowed_countries: ["GB"] },
       metadata: {
         order_summary: orderSummary.slice(0, 500),
-      },
-      payment_intent_data: {
-        metadata: {
-          order_summary: orderSummary.slice(0, 500),
-        },
       },
     });
 

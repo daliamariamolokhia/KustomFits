@@ -1,13 +1,13 @@
 ---
+import Logo from "./Logo.astro";
+
 const year = new Date().getFullYear();
 ---
 
 <footer class="mt-16 border-t border-white/10 bg-brand-dark">
   <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
     <div>
-      <span class="inline-block rounded-lg bg-white px-3 py-2">
-        <img src="/logo.png" alt="Kustom Fits" class="h-12 w-auto object-contain" />
-      </span>
+      <Logo class="h-12 w-auto object-contain" wrapperClass="" />
       <p class="mt-3 text-sm text-brand-gray">
         Custom outfits, tote bags, caps, and more. Your design, professionally printed.
       </p>

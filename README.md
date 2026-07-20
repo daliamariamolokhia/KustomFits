@@ -52,14 +52,45 @@ Replace placeholder images in `public/products/` with real product photos (`.jpg
 
 Messages go to `hello@kustomfits.com` via [FormSubmit](https://formsubmit.co). On first use, FormSubmit sends a confirmation email — click the link to activate.
 
+## Stripe setup (cards, Apple Pay, Google Pay)
+
+### 1. Create a Stripe account
+Sign up at [stripe.com](https://stripe.com) if you haven't already.
+
+### 2. Get your API keys
+[Stripe Dashboard → Developers → API keys](https://dashboard.stripe.com/apikeys)
+
+- **Test mode** (for trying checkout): use `sk_test_...`
+- **Live mode** (real payments): toggle off test mode, use `sk_live_...`
+
+### 3. Add the key to Vercel
+1. Vercel → **kustom-fits** → **Settings → Environment Variables**
+2. Add `STRIPE_SECRET_KEY` = your secret key
+3. Enable for **Production** (and Preview if you want to test deploy previews)
+4. **Deployments → Redeploy** (required after adding env vars)
+
+For local dev, copy `.env.example` to `.env` and add the same key.
+
+### 4. Test a payment
+1. Add items to cart → **Checkout** → **Pay with card, Apple Pay, or Google Pay**
+2. Test card: `4242 4242 4242 4242`, any future expiry, any CVC
+3. Check payment in [Stripe Dashboard → Payments](https://dashboard.stripe.com/payments)
+
+### 5. Enable Apple Pay (one-time domain setup)
+1. [Stripe → Settings → Payment methods → Apple Pay](https://dashboard.stripe.com/settings/payment_methods)
+2. **Add domain** → enter `kustomfits.com`
+3. Download Stripe's verification file
+4. Save it to `public/.well-known/apple-developer-merchantid-domain-association` (see that folder's README)
+5. Commit, push, redeploy
+6. Click **Verify** in Stripe
+
+Google Pay works automatically through Stripe Checkout — no extra setup.
+
+### 6. Go live
+1. Complete [Stripe account activation](https://dashboard.stripe.com/account/onboarding) (business details, bank account)
+2. Switch Vercel env var to your **live** key (`sk_live_...`)
+3. Redeploy
+
 ## Deploying to kustomfits.com
 
-Deploy the `dist/` folder to any static host (Netlify, Vercel, Cloudflare Pages, etc.) and point your domain DNS to it.
-
-## Stripe setup
-
-1. Copy `.env.example` to `.env`
-2. Add your [Stripe secret key](https://dashboard.stripe.com/apikeys) (`sk_test_...` for testing)
-3. Restart the dev server — the checkout page will redirect to Stripe
-
-For production, set `STRIPE_SECRET_KEY` as an environment variable on your host (Vercel, Netlify, etc.). This project uses Astro hybrid mode so the API route runs server-side on deploy.
+This project uses the **Vercel adapter**. Push to `main` on GitHub and Vercel deploys automatically.

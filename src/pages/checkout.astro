@@ -42,8 +42,11 @@ import Footer from "../components/Footer.astro";
             type="button"
             class="w-full rounded-full bg-brand-cyan py-3 font-display text-lg tracking-wide text-brand-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Pay securely with Stripe
+            Pay with card, Apple Pay, or Google Pay
           </button>
+          <p class="mt-3 text-center text-xs text-brand-muted">
+            Apple Pay and Google Pay appear automatically on supported devices at checkout.
+          </p>
           <p id="checkout-error" class="mt-3 hidden text-center text-sm text-red-400"></p>
           <p id="checkout-fallback" class="mt-3 hidden text-center text-sm text-brand-gray">
             Stripe isn't configured yet.
@@ -136,7 +139,7 @@ import Footer from "../components/Footer.astro";
           errorEl!.textContent = err instanceof Error ? err.message : "Something went wrong";
           errorEl?.classList.remove("hidden");
           checkoutBtn.disabled = false;
-          checkoutBtn.textContent = "Pay securely with Stripe";
+          checkoutBtn.textContent = "Pay with card, Apple Pay, or Google Pay";
         }
       });
     }

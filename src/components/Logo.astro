@@ -1,0 +1,39 @@
+---
+import logo from "../assets/logo.png";
+
+interface Props {
+  class?: string;
+  showBackground?: boolean;
+}
+
+const {
+  class: className = "h-10 w-auto object-contain",
+  showBackground = true,
+} = Astro.props;
+---
+
+{
+  showBackground ? (
+    <span class="inline-block rounded-lg bg-white px-2 py-1 shadow-sm">
+      <img
+        src={logo.src}
+        alt="Kustom Fits"
+        class={className}
+        width={logo.width}
+        height={logo.height}
+        loading="eager"
+        decoding="async"
+      />
+    </span>
+  ) : (
+    <img
+      src={logo.src}
+      alt="Kustom Fits"
+      class={className}
+      width={logo.width}
+      height={logo.height}
+      loading="eager"
+      decoding="async"
+    />
+  )
+}
