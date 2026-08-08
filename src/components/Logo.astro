@@ -1,37 +1,42 @@
 ---
 import logo from "../assets/logo.png";
+import logoHeader from "../assets/logo-header.png";
 
 interface Props {
   class?: string;
   showBackground?: boolean;
+  variant?: "default" | "header";
 }
 
 const {
   class: className = "h-10 w-auto object-contain",
   showBackground = false,
+  variant = "default",
 } = Astro.props;
+
+const image = variant === "header" ? logoHeader : logo;
 ---
 
 {
   showBackground ? (
     <span class="inline-block rounded-lg bg-white px-2 py-1 shadow-sm">
       <img
-        src={logo.src}
+        src={image.src}
         alt="Kustom Fits"
         class={className}
-        width={logo.width}
-        height={logo.height}
+        width={image.width}
+        height={image.height}
         loading="eager"
         decoding="async"
       />
     </span>
   ) : (
     <img
-      src={logo.src}
+      src={image.src}
       alt="Kustom Fits"
       class={className}
-      width={logo.width}
-      height={logo.height}
+      width={image.width}
+      height={image.height}
       loading="eager"
       decoding="async"
     />
